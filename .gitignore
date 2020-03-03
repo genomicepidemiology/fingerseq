@@ -1,0 +1,4 @@
+fingerseq
+*.o
+*.a
+*~
