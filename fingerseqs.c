@@ -106,6 +106,8 @@ int matchHead(unsigned char *src1, unsigned char *src2) {
 	}
 	if(*src1 && *src2) {
 		++len;
+	} else {
+		diff = 0;
 	}
 	
 	return diff ? 0 : len;
@@ -124,7 +126,7 @@ int isPair(FileBuff *filebuff, FileBuff *filebuff_rc) {
 		if((i = matchHead(buff, buff_rc))) {
 			buff += i;
 			buff_rc += i;
-		} else if(i == 0) {
+		} else {
 			return 0;
 		}
 		
