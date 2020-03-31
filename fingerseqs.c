@@ -109,6 +109,10 @@ int matchHead(unsigned char *src1, unsigned char *src2) {
 	} else {
 		diff = 0;
 	}
+	if(diff <= 4) {
+		/* sra reads */
+		diff = 0;
+	}
 	
 	return diff ? 0 : len;
 }
