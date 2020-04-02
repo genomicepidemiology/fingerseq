@@ -231,14 +231,14 @@ int fingerSeqs(char **filenames, int filenum) {
 				maxQ >>= 32;
 				
 				if(41 < maxQ) {
-					if(max <= 1000) {
+					if(max <= 500) {
 						seqinfo->tech = IonTorrent;
 					} else {
 						seqinfo->tech = Nanopore;
 					}
 				} else if(max <= 251) {
 					seqinfo->tech = Illumina;
-				} else if(max <= 1000) {
+				} else if(max <= 500) {
 					seqinfo->tech = IonTorrent;
 				} else {
 					seqinfo->tech = Nanopore;
