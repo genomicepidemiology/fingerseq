@@ -90,6 +90,33 @@ long unsigned minmaxFileBuff(FileBuff *src) {
 	return (maxQ << 32) | max;
 }
 
+int maxFileBuff(FileBuff *src) {
+	
+	unsigned len, max;
+	unsigned char *buff;
+	
+	max = 0;
+	len = 0;
+	buff = src->next;
+	while(*buff != 0) {
+		if(*buff == '>') {
+			if(max < len) {
+				max = len;
+			}
+			len = 0;
+		} else if(*buff != '\n') {
+			++len;
+		} else if(*buff != '>') {
+			return -1;
+		}
+	}
+	if(max < len) {
+		max = len;
+	}
+	
+	return max;
+}
+
 int matchHead(unsigned char *src1, unsigned char *src2) {
 	
 	int diff, len;
@@ -119,12 +146,13 @@ int matchHead(unsigned char *src1, unsigned char *src2) {
 
 int isPair(FileBuff *filebuff, FileBuff *filebuff_rc) {
 	
-	int i, len;
+	int i, len, fasta;
 	unsigned char *buff, *buff_rc;
 	
 	/* cmp first headers */
 	buff = filebuff->next;
 	buff_rc = filebuff_rc->next;
+	fasta = *buff == '>';
 	while(*buff != 0 && *buff_rc != 0) {
 		/* cmp headers */
 		if((i = matchHead(buff, buff_rc))) {
@@ -135,13 +163,18 @@ int isPair(FileBuff *filebuff, FileBuff *filebuff_rc) {
 		}
 		
 		/* seek to next header */
-		skipLine(buff, len);
-		skipLine(buff, i);
-		skipNchar(buff, len);
-		
-		skipLine(buff_rc, len);
-		skipLine(buff_rc, i);
-		skipNchar(buff_rc, len);
+		if(fasta) {
+			skipLine(buff, len);
+			skipLine(buff_rc, len);
+		} else {
+			skipLine(buff, len);
+			skipLine(buff, i);
+			skipNchar(buff, len);
+			
+			skipLine(buff_rc, len);
+			skipLine(buff_rc, i);
+			skipNchar(buff_rc, len);
+		}
 	}
 	
 	return 1;
@@ -150,7 +183,7 @@ int isPair(FileBuff *filebuff, FileBuff *filebuff_rc) {
 int fingerSeqs(char **filenames, int filenum) {
 	
 	char *fastA = "fastA", *fastQ = "fastQ", *Illumina = "Illumina", *IonTorrent = "Ion Torrent", *Nanopore = "Nanopore", *PacBio = "PacBio", *Na = "Na";
-	int i, j, seqtype;
+	int i, j, seqtype, seqlen;
 	long unsigned max, maxQ;
 	char to2bit[256];
 	FileBuff **seqbuffs, *seqbuff;
@@ -217,7 +250,18 @@ int fingerSeqs(char **filenames, int filenum) {
 		seqtype = openAndDetermine(seqbuff, filenames[i]);
 		if(seqtype & 2) {
 			seqinfo->phred = -1;
-			seqinfo->tech = fastA;
+			seqlen = maxFileBuff(seqbuff);
+			if(seqlen <= 0) {
+				seqinfo->tech = fastA;
+			} else if(seqlen <= 251) {
+				seqinfo->tech = Illumina;
+			} else if(seqlen <= 500) {
+				seqinfo->tech = IonTorrent;
+			} else if(seqlen <= 100000) {
+				seqinfo->tech = Nanopore;
+			} else {
+				seqinfo->tech = fastA;
+			}
 		} else {
 			seqinfo->phred = getPhredFileBuff(seqbuff);
 			if(seqinfo->phred == 0) {

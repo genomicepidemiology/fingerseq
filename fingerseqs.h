@@ -31,6 +31,7 @@ struct seqInfo {
 
 SeqInfo * SeqInfo_init();
 long unsigned minmaxFileBuff(FileBuff *src);
+int maxFileBuff(FileBuff *src);
 int matchHead(unsigned char *src1, unsigned char *src2);
 int isPair(FileBuff *filebuff, FileBuff *filebuff_rc);
 int fingerSeqs(char **filenames, int filenum);
