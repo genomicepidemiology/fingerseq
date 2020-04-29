@@ -97,8 +97,8 @@ int maxFileBuff(FileBuff *src) {
 	
 	max = 0;
 	len = 0;
-	buff = src->next;
-	while(*buff != 0) {
+	buff = src->next - 1;
+	while(*++buff != 0) {
 		if(*buff == '>') {
 			if(max < len) {
 				max = len;
@@ -106,8 +106,6 @@ int maxFileBuff(FileBuff *src) {
 			len = 0;
 		} else if(*buff != '\n') {
 			++len;
-		} else if(*buff != '>') {
-			return -1;
 		}
 	}
 	if(max < len) {
@@ -180,7 +178,7 @@ int isPair(FileBuff *filebuff, FileBuff *filebuff_rc) {
 	return 1;
 }
 
-int fingerSeqs(char **filenames, int filenum) {
+int fingerSeqs(char **filenames, int filenum, int flag) {
 	
 	char *fastA = "fastA", *fastQ = "fastQ", *Illumina = "Illumina", *IonTorrent = "Ion Torrent", *Nanopore = "Nanopore", *PacBio = "PacBio", *Na = "Na";
 	int i, j, seqtype, seqlen;
@@ -250,7 +248,7 @@ int fingerSeqs(char **filenames, int filenum) {
 		seqtype = openAndDetermine(seqbuff, filenames[i]);
 		if(seqtype & 2) {
 			seqinfo->phred = -1;
-			seqlen = maxFileBuff(seqbuff);
+			seqlen = (flag & 1) ? maxFileBuff(seqbuff) : 0;
 			if(seqlen <= 0) {
 				seqinfo->tech = fastA;
 			} else if(seqlen <= 251) {

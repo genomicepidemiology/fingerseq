@@ -22,12 +22,16 @@
 #include <string.h>
 #include "fingerseqs.h"
 #include "version.h"
+#define missArg(opt) fprintf(stderr, "Missing argument at %s.\n", opt); exit(1);
+#define invaArg(opt) fprintf(stderr, "Invalid value parsed at %s.\n", opt); exit(1);
 
 static int helpMessage(FILE *out) {
 	
 	fprintf(out, "# fingerseq gives standard information from a set of sequence samples. Fasta and fastq format are accepted, gzip compression is allowed.\n");
 	fprintf(out, "# %16s\t%-32s\n", "Options are:", "Desc:");
 	fprintf(out, "# %16s\t%-32s\n", "-i", "Input file(s)");
+	fprintf(out, "# %16s\t%-32s\n", "-f", "Flag <int>");
+	fprintf(out, "# %16s\t%-32s\n", "-fh", "Help on flags");
 	fprintf(out, "# %16s\t%-32s\n", "-v", "Version");
 	fprintf(out, "# %16s\t%-32s\n", "-h", "Shows this helpmessage");
 	
@@ -36,10 +40,11 @@ static int helpMessage(FILE *out) {
 
 int main(int argc, char *argv[]) {
 	
-	int args, filenum;
-	char **arg, **filenames;
+	int args, flag, filenum;
+	char **arg, **filenames, *errorMsg;
 	
 	/* set defaults */
+	flag = 0;
 	filenum = 0;
 	filenames = 0;
 	
@@ -62,6 +67,21 @@ int main(int argc, char *argv[]) {
 					--args;
 					--arg;
 				}
+			} else if(strcmp(*arg, "f") == 0) {
+				if(++args < argc) {
+					flag = strtoul(*++arg, &errorMsg, 10);
+					if(*errorMsg != 0) {
+						invaArg("\"-f\"");
+					}
+				} else {
+					missArg("\"-f\"");
+				}
+			} else if(strcmp(*arg, "fh") == 0) {
+				fprintf(stdout, "# Format flags output, add them to combine them.\n");
+				fprintf(stdout, "#\n");
+				fprintf(stdout, "#   1:\tPredict fasta as reads\n");
+				fprintf(stdout, "#\n");
+				return 0;
 			} else if(strcmp(*arg, "h") == 0) {
 				/* help */
 				return helpMessage(stdout);
@@ -84,5 +104,5 @@ int main(int argc, char *argv[]) {
 	}
 	
 	/* finger file(s) */
-	return fingerSeqs(filenames, filenum);
+	return fingerSeqs(filenames, filenum, flag);
 }

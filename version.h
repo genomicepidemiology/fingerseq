@@ -17,4 +17,4 @@
  * limitations under the License.
 */
 
-#define FINGERSEQ_VERSION "0.0.4"
+#define FINGERSEQ_VERSION "0.0.5"
