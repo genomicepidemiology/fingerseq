@@ -251,9 +251,9 @@ int fingerSeqs(char **filenames, int filenum, int flag) {
 			seqlen = (flag & 1) ? maxFileBuff(seqbuff) : 0;
 			if(seqlen <= 0) {
 				seqinfo->tech = fastA;
-			} else if(seqlen <= 251) {
+			} else if(seqlen <= 301) {
 				seqinfo->tech = Illumina;
-			} else if(seqlen <= 500) {
+			} else if(seqlen <= 600) {
 				seqinfo->tech = IonTorrent;
 			} else if(seqlen <= 100000) {
 				seqinfo->tech = Nanopore;
@@ -273,14 +273,14 @@ int fingerSeqs(char **filenames, int filenum, int flag) {
 				maxQ >>= 32;
 				
 				if(41 < maxQ) {
-					if(max <= 500) {
+					if(max <= 600) {
 						seqinfo->tech = IonTorrent;
 					} else {
 						seqinfo->tech = Nanopore;
 					}
-				} else if(max <= 251) {
+				} else if(max <= 301) {
 					seqinfo->tech = Illumina;
-				} else if(max <= 500) {
+				} else if(max <= 600) {
 					seqinfo->tech = IonTorrent;
 				} else {
 					seqinfo->tech = Nanopore;
