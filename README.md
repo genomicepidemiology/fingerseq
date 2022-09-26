@@ -5,7 +5,7 @@ git clone https://bitbucket.org/genomicepidemiology/fingerseq.git
 cd fingerseq && make
 
 ./fingerseq -v -h
-./fingerseq -i *.fastq.gz
+./fingerseq *.fastq.gz
 ```
 
 # Introduction #

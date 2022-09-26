@@ -1,6 +1,6 @@
 CFLAGS ?= -Wall -O3
 CFLAGS += -std=c99
-LIBS = filebuff.o fingerseqs.o qseqs.o pherror.o seqparse.o
+LIBS = cmdline.o filebuff.o fingerseqs.o qseqs.o pherror.o seqparse.o
 PROGS = fingerseq
 
 .c .o:
@@ -18,6 +18,7 @@ clean:
 	$(RM) $(LIBS) $(PROGS) libfingerseq.a
 
 
+cmdline.o: cmdline.h
 filebuff.o: filebuff.h pherror.h qseqs.h
 fingerseqs.o: fingerseqs.h filebuff.h pherror.h seqparse.h
 qseqs.o: qseqs.h pherror.h

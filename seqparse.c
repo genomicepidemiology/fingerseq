@@ -38,6 +38,7 @@ int openAndDetermine(FileBuff *inputfile, char *filename) {
 	} else {
 		openFileBuff(inputfile, filename, "rb");
 	}
+	
 	if(buff_FileBuff(inputfile)) {
 		check = (short unsigned *) inputfile->buffer;
 		if(*check == 35615) {

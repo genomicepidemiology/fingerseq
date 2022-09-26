@@ -178,7 +178,7 @@ int isPair(FileBuff *filebuff, FileBuff *filebuff_rc) {
 	return 1;
 }
 
-int fingerSeqs(char **filenames, int filenum, int flag) {
+int fingerSeqs(char **filenames, int filenum, int flag, int buffSize) {
 	
 	char *fastA = "fastA", *fastQ = "fastQ", *Illumina = "Illumina", *IonTorrent = "Ion Torrent", *Nanopore = "Nanopore", *PacBio = "PacBio", *Na = "Na";
 	int i, j, seqtype, seqlen;
@@ -244,7 +244,7 @@ int fingerSeqs(char **filenames, int filenum, int flag) {
 	/* get phred scale and technology */
 	for(i = 0; i < filenum; ++i) {
 		seqinfos[i] = (seqinfo = SeqInfo_init());
-		seqbuffs[i] = (seqbuff = setFileBuff(1024 * 1024));
+		seqbuffs[i] = (seqbuff = setFileBuff(buffSize));
 		seqtype = openAndDetermine(seqbuff, filenames[i]);
 		if(seqtype & 2) {
 			seqinfo->phred = -1;
@@ -271,7 +271,6 @@ int fingerSeqs(char **filenames, int filenum, int flag) {
 				maxQ = minmaxFileBuff(seqbuff);
 				max = maxQ & 4294967295U;
 				maxQ >>= 32;
-				
 				if(41 < maxQ) {
 					if(max <= 600) {
 						seqinfo->tech = IonTorrent;

@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "cmdline.h"
 #include "fingerseqs.h"
 #include "version.h"
 #define missArg(opt) fprintf(stderr, "Missing argument at %s.\n", opt); exit(1);
@@ -27,74 +28,117 @@
 
 static int helpMessage(FILE *out) {
 	
-	fprintf(out, "# fingerseq gives standard information from a set of sequence samples. Fasta and fastq format are accepted, gzip compression is allowed.\n");
-	fprintf(out, "# %16s\t%-32s\n", "Options are:", "Desc:");
-	fprintf(out, "# %16s\t%-32s\n", "-i", "Input file(s)");
-	fprintf(out, "# %16s\t%-32s\n", "-f", "Flag <int>");
-	fprintf(out, "# %16s\t%-32s\n", "-fh", "Help on flags");
-	fprintf(out, "# %16s\t%-32s\n", "-v", "Version");
-	fprintf(out, "# %16s\t%-32s\n", "-h", "Shows this helpmessage");
+	fprintf(out, "#fingerseq gives standard information from a set of sequence samples. Fasta and fastq format are accepted, gzip compression is allowed.\n");
+	fprintf(out, "#   %-24s\t%-32s\t%s\n", "Options are:", "Desc:", "Default:");
+	fprintf(out, "#    -%c, --%-16s\t%-32s\t%s\n", 'i', "input", "Input file(s)", "stdin");
+	fprintf(out, "#    -%c, --%-16s\t%-32s\t%s\n", 'f', "flag", "Output flags", "1");
+	fprintf(out, "#    -%c, --%-16s\t%-32s\t%s\n", 'F', "flag_help", "Help on option \"-f\"", "");
+	fprintf(out, "#    -%c, --%-16s\t%-32s\t%s\n", 'b', "buffer_size", "File buffer size", "4194304");
+	fprintf(out, "#    -%c, --%-17s\t%-32s\t%s\n", 'v', "version", "Version", "");
+	fprintf(out, "#    -%c, --%-16s\t%-32s\t%s\n", 'h', "help", "Shows this helpmessage", "");
 	
 	return out == stderr;
 }
 
 int main(int argc, char *argv[]) {
 	
-	int args, flag, filenum;
-	char **arg, **filenames, *errorMsg;
+	int args, len, offset, flag, filenum, buffSize;
+	char **Arg, *arg, **filenames, opt;
 	
 	/* set defaults */
 	flag = 0;
 	filenum = 0;
 	filenames = 0;
+	buffSize = 4 * 1024 * 1024;
 	
 	/* parse cmd-line */
-	arg = argv;
-	args = 0;
-	while(++args < argc) {
-		++arg;
-		if(*(*arg)++ == '-') {
-			if(strcmp(*arg, "i") == 0) {
-				/* filenames */
-				if(++args < argc) {
-					filenames = ++arg;
-					filenum = 0;
-					while(args < argc && **arg != '-') {
-						++filenum;
-						++args;
-						++arg;
-					}
-					--args;
-					--arg;
-				}
-			} else if(strcmp(*arg, "f") == 0) {
-				if(++args < argc) {
-					flag = strtoul(*++arg, &errorMsg, 10);
-					if(*errorMsg != 0) {
-						invaArg("\"-f\"");
-					}
+	/* parse cmd-line */
+	args = argc - 1;
+	Arg = argv;
+	if(args && **++Arg == '-') {
+		len = 1;
+		--Arg;
+	} else {
+		len = 0;
+	}
+	while(args && len) {
+		arg = *++Arg;
+		if(*arg++ == '-') {
+			if(*arg == '-') {
+				/* check if argument is included */
+				len = getOptArg(++arg);
+				offset = 2 + (arg[len] ? 1 : 0);
+				
+				/* long option */
+				if(*arg == 0) {
+					/* terminate cmd-line */
+					++Arg;
+				} else if(strncmp(arg, "input", len) == 0) {
+					filenames = getArgListDie(&Arg, &args, len + offset, "input");
+					filenum = getArgListLen(&Arg, &args);
+				} else if(strncmp(arg, "flag", len) == 0) {
+					flag = getNumArg(&Arg, &args, len + offset, "flag");
+				} else if(strncmp(arg, "flag_help", len) == 0) {
+					flag = -1;
+				} else if(strncmp(arg, "buffer_size", len) == 0) {
+					buffSize = getNumArg(&Arg, &args, len + offset, "buffer_size");
+				} else if(strncmp(arg, "version", len) == 0) {
+					fprintf(stdout, "fingerseq-%s\n", FINGERSEQ_VERSION);
+				} else if(strncmp(arg, "help", len) == 0) {
+					return helpMessage(stdout);
 				} else {
-					missArg("\"-f\"");
+					unknArg(arg - 2);
 				}
-			} else if(strcmp(*arg, "fh") == 0) {
-				fprintf(stdout, "# Format flags output, add them to combine them.\n");
-				fprintf(stdout, "#\n");
-				fprintf(stdout, "#   1:\tPredict fasta as reads\n");
-				fprintf(stdout, "#\n");
-				return 0;
-			} else if(strcmp(*arg, "h") == 0) {
-				/* help */
-				return helpMessage(stdout);
-			} else if(strcmp(*arg, "v") == 0) {
-				fprintf(stdout, "fingerseq-%s\n", FINGERSEQ_VERSION);
 			} else {
-				fprintf(stderr, "Unknown option:\t%s\n", --*arg);
-				return helpMessage(stderr);
+				/* multiple option */
+				len = 1;
+				opt = *arg;
+				while(opt && (opt = *arg++)) {
+					++len;
+					if(opt == 'i') {
+						filenames = getArgListDie(&Arg, &args, len, "i");
+						filenum = getArgListLen(&Arg, &args);
+						opt = 0;
+					} else if(opt == 'f') {
+						flag = getNumArg(&Arg, &args, len, "f");
+						opt = 0;
+					} else if(opt == 'F') {
+						flag = -1;
+					} else if(opt == 'b') {
+						buffSize = getNumArg(&Arg, &args, len, "b");
+						opt = 0;
+					} else if(opt == 'v') {
+						fprintf(stdout, "fingerseq-%s\n", FINGERSEQ_VERSION);
+					} else if(opt == 'h') {
+						return helpMessage(stdout);
+					} else {
+						*arg = 0;
+						unknArg(arg - 1);
+					}
+				}
 			}
 		} else {
-			fprintf(stderr, "Unknown argument:\t%s\n", --*arg);
-			return helpMessage(stderr);
+			/* terminate cmd-line */
+			--arg;
+			++args;
+			len = 0;
 		}
+		--args;
+	}
+	
+	/* non-options */
+	if(args) {
+		filenames = Arg;
+		filenum = args;
+	}
+	
+	/* flag help */
+	if(flag == -1) {
+		fprintf(stdout, "# Format flags output, add them to combine them.\n");
+		fprintf(stdout, "#\n");
+		fprintf(stdout, "#   1:\tPredict fasta as reads\n");
+		fprintf(stdout, "#\n");
+		return 0;
 	}
 	
 	/* check input */
@@ -104,5 +148,5 @@ int main(int argc, char *argv[]) {
 	}
 	
 	/* finger file(s) */
-	return fingerSeqs(filenames, filenum, flag);
+	return fingerSeqs(filenames, filenum, flag, buffSize);
 }
